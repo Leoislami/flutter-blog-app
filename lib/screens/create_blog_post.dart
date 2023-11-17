@@ -14,8 +14,7 @@ class _CreateBlogPostPageState extends State<CreateBlogPostPage> {
 
   Future<void> createBlogPost(String title, String content) async {
     final response = await http.post(
-      Uri.parse(
-          'https://d-cap-blog-backend.whitepond-b96fee4b.westeurope.azurecontainerapps.io//entries'),
+      Uri.parse('https://your-backend-url/entries'),
       headers: <String, String>{
         'Content-Type': 'application/json; charset=UTF-8',
       },
@@ -26,9 +25,17 @@ class _CreateBlogPostPageState extends State<CreateBlogPostPage> {
     );
 
     if (response.statusCode == 201) {
-      Navigator.of(context).pop(); // Zurück zur Hauptseite
+      // Display a success message
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Blog posted successfully')),
+      );
+      // Navigate back to the home page
+      Navigator.of(context).pop();
     } else {
-      // Fehlerbehandlung
+      // Display an error message
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to post blog')),
+      );
     }
   }
 
