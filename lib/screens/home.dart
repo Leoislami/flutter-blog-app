@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_blog_app/models/blog.dart';
+import 'package:flutter_blog_app/screens/blog_detail.dart';
 import 'package:flutter_blog_app/services/blog_repository.dart';
+import 'package:flutter_blog_app/screens/new_blog_screen.dart';
 
 class Home extends StatefulWidget {
   const Home({super.key});
@@ -11,7 +13,6 @@ class Home extends StatefulWidget {
 
 class _HomeState extends State<Home> {
   final BlogRepository _blogRepository = BlogRepository();
-
   List<Blog>? blogs;
 
   @override
@@ -28,6 +29,47 @@ class _HomeState extends State<Home> {
 
   @override
   Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text("Blog"),
+      ),
+      drawer: Drawer(
+        child: ListView(
+          padding: EdgeInsets.zero,
+          children: <Widget>[
+            const DrawerHeader(
+              decoration: BoxDecoration(
+                color: Colors.blue,
+              ),
+              child: Text(
+                'Home',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 24,
+                ),
+              ),
+            ),
+            ListTile(
+              leading: const Icon(Icons.add),
+              title: const Text('New Blog'),
+              onTap: () {
+                Navigator.pop(context); // Schließt den Drawer
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) => const NewBlogScreen()),
+                );
+              },
+            ),
+            // Fügen Sie hier weitere Listenelemente für andere Seiten hinzu
+          ],
+        ),
+      ),
+      body: blogsListWidget(),
+    );
+  }
+
+  Widget blogsListWidget() {
     if (blogs == null) {
       return const Center(
         child: CircularProgressIndicator(),
@@ -39,20 +81,16 @@ class _HomeState extends State<Home> {
         child: Text('No blogs yet.'),
       );
     }
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text("Blog"),
-      ),
-      body: ListView.builder(
-        itemCount: blogs!.length,
-        itemBuilder: (context, index) {
-          var blog = blogs![index];
-          return Padding(
-            padding: const EdgeInsets.all(4.0),
-            child: BlogWidget(blog: blog),
-          );
-        },
-      ),
+
+    return ListView.builder(
+      itemCount: blogs!.length,
+      itemBuilder: (context, index) {
+        var blog = blogs![index];
+        return Padding(
+          padding: const EdgeInsets.all(4.0),
+          child: BlogWidget(blog: blog),
+        );
+      },
     );
   }
 }
@@ -68,7 +106,12 @@ class BlogWidget extends StatelessWidget {
       cursor: SystemMouseCursors.click,
       child: GestureDetector(
         onTap: () {
-          // TODO: Navigate to Blog Detail Page
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => BlogDetail(blog: blog),
+            ),
+          );
         },
         child: Card(
           child: Padding(
