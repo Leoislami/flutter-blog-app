@@ -3,68 +3,35 @@ import 'package:flutter_blog_app/providers/blog_provider.dart';
 import 'package:flutter_blog_app/screens/main_screen.dart';
 import 'package:provider/provider.dart';
 
-// void main() {
-//   runApp(const MainApp());
-// }
-
-// final GlobalKey<NavigatorState> mainNavigatorKey = GlobalKey<NavigatorState>();
-
-// class MainApp extends StatelessWidget {
-//   const MainApp({super.key});
-
-//   @override
-//   Widget build(BuildContext context) {
-//     var colorScheme = ColorScheme.fromSeed(
-//       seedColor: Colors.cyanAccent,
-//     );
-//     return ChangeNotifierProvider(
-//       create: (_) => BlogProvider(),
-//       child: MaterialApp(
-//         navigatorKey: mainNavigatorKey,
-//         title: "Interaction and State",
-//         theme: ThemeData(
-//           useMaterial3: true,
-//           colorScheme: colorScheme,
-//           scaffoldBackgroundColor: colorScheme.surfaceVariant,
-//           appBarTheme: AppBarTheme(
-//             backgroundColor: colorScheme.surfaceVariant,
-//           ),
-//           textTheme: const TextTheme(
-//             titleLarge: TextStyle(
-//               fontSize: 30,
-//             ),
-//           ),
-//         ),
-//         home: const MainScreen(),
-//       ),
-//     );
-//   }
-// }
-
 void main() {
   runApp(const MainApp());
 }
 
+// GlobalKey wird verwendet, um auf den NavigatorState außerhalb des Baumes zuzugreifen.
 final GlobalKey<NavigatorState> mainNavigatorKey = GlobalKey<NavigatorState>();
 
+/// MainApp ist die Hauptklasse, die die Anwendung initialisiert und einrichtet.
 class MainApp extends StatelessWidget {
   const MainApp({super.key});
 
   @override
   Widget build(BuildContext context) {
+    // Ein ChangeNotifierProvider wird verwendet, um den Zustand der Blogs in der gesamten App zu verwalten.
     return ChangeNotifierProvider(
       create: (_) => BlogProvider(),
       child: MaterialApp(
-        navigatorKey: mainNavigatorKey,
-        title: 'Flutter Blog App',
+        navigatorKey:
+            mainNavigatorKey, // Globaler Navigator-Schlüssel für die Navigation.
+        title: 'Flutter Blog App', // Titel der Anwendung.
         theme: ThemeData.dark().copyWith(
-          // Aktiviert den Dark Mode mit Anpassungen
-          useMaterial3: true,
+          // Verwendung des dunklen Themes mit Anpassungen.
+          useMaterial3: true, // Aktiviert Material Design 3-Stil.
           appBarTheme: const AppBarTheme(
-            color: Colors.black, // Farbe der AppBar im Dark Mode
+            color: Colors.black, // Setzt die Farbe der AppBar im Dark Mode.
           ),
         ),
-        home: const MainScreen(),
+        home:
+            const MainScreen(), // Setzt MainScreen als Startbildschirm der App.
       ),
     );
   }

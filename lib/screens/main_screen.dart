@@ -2,55 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_blog_app/screens/blog/blog_new_page.dart';
 import 'package:flutter_blog_app/screens/home_page.dart';
 
-// class MainScreen extends StatefulWidget {
-//   const MainScreen({super.key});
-
-//   @override
-//   State<MainScreen> createState() => _MainScreenState();
-// }
-
-// class _MainScreenState extends State<MainScreen> {
-//   @override
-//   Widget build(BuildContext context) {
-//     // Verwendet Scaffold als Basis-Layout-Widget.
-//     return Scaffold(
-//       appBar: AppBar(
-//         title: const Text('Main Screen'), // Titel der AppBar.
-//       ),
-//       // Der Drawer bietet ein Menü für die Navigation.
-//       drawer: Drawer(
-//         // ListView wird für die Menüelemente verwendet.
-//         child: ListView(
-//           padding: EdgeInsets.zero,
-//           children: <Widget>[
-//             const DrawerHeader(
-//               decoration: BoxDecoration(
-//                 color: Colors.blue, // Farbe des Headers im Drawer.
-//               ),
-//               child: Text('Menu',
-//                   style: TextStyle(color: Colors.white, fontSize: 24)),
-//             ),
-//             // ListTile für jedes Menüelement.
-//             ListTile(
-//               title: const Text('New Blog'),
-//               onTap: () {
-//                 // Schliesst den Drawer beim Tippen und navigiert zur New Blog-Seite.
-//                 Navigator.pop(context);
-//                 Navigator.of(context).push(MaterialPageRoute(
-//                   builder: (context) => const BlogNewPage(),
-//                 ));
-//               },
-//             ),
-//             // Einfügen weitere Menüpunkte hinzu, wenn nötig.
-//           ],
-//         ),
-//       ),
-//       body: const HomePage(), // Hauptinhalt der Seite.
-//     );
-//   }
-// }
-
+/// Klasse für Menüelemente, die in der Hauptnavigation verwendet werden.
 class MainMenuItem {
+  // Liste aller Menüelemente.
   static final List<MainMenuItem> items = _getMenuItems();
 
   final IconData icon;
@@ -58,16 +12,19 @@ class MainMenuItem {
   final Widget page;
   final GlobalKey<NavigatorState> navigatorKey;
 
+  // Konstruktor für MainMenuItem.
   MainMenuItem({required this.icon, required this.text, required this.page})
       : navigatorKey = GlobalKey<NavigatorState>();
 }
 
+// Erstellt und gibt die Liste der Menüelemente zurück.
 List<MainMenuItem> _getMenuItems() => [
       MainMenuItem(icon: Icons.home, text: "Home", page: const HomePage()),
       MainMenuItem(
           icon: Icons.add, text: "New Blog", page: const BlogNewPage()),
     ];
 
+/// MainScreen ist der Hauptbildschirm der App, der die Navigation verwaltet.
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
 
@@ -76,7 +33,7 @@ class MainScreen extends StatefulWidget {
 }
 
 class _MainScreenState extends State<MainScreen> {
-  int selectedIndex = 0;
+  int selectedIndex = 0; // Index des aktuell ausgewählten Menüelements.
 
   @override
   Widget build(BuildContext context) {
@@ -84,18 +41,20 @@ class _MainScreenState extends State<MainScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(selectedMenuItem.text),
+        title:
+            Text(selectedMenuItem.text), // Titel des ausgewählten Menüelements.
         leading: Builder(
           builder: (BuildContext context) {
             return IconButton(
               icon: const Icon(Icons.menu),
-              onPressed: () => Scaffold.of(context).openDrawer(),
+              onPressed: () =>
+                  Scaffold.of(context).openDrawer(), // Öffnet den Drawer.
             );
           },
         ),
       ),
       drawer: Drawer(
-        // Hamburger-Menü mit Navigationselementen
+        // Drawer-Menü mit allen Menüelementen.
         child: ListView(
           padding: EdgeInsets.zero,
           children: MainMenuItem.items.map((item) {
@@ -104,8 +63,9 @@ class _MainScreenState extends State<MainScreen> {
               title: Text(item.text),
               onTap: () {
                 setState(() {
-                  selectedIndex = MainMenuItem.items.indexOf(item);
-                  Navigator.of(context).pop(); // Schließt das Drawer-Menü
+                  selectedIndex = MainMenuItem.items
+                      .indexOf(item); // Aktualisiert den ausgewählten Index.
+                  Navigator.of(context).pop(); // Schließt den Drawer.
                 });
               },
             );
@@ -114,8 +74,9 @@ class _MainScreenState extends State<MainScreen> {
       ),
       body: Navigator(
         key: selectedMenuItem.navigatorKey,
-        onGenerateRoute: (settings) =>
-            MaterialPageRoute(builder: (context) => selectedMenuItem.page),
+        onGenerateRoute: (settings) => MaterialPageRoute(
+            builder: (context) =>
+                selectedMenuItem.page), // Navigiert zur ausgewählten Seite.
       ),
     );
   }

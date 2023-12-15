@@ -1,19 +1,20 @@
 import 'dart:async';
-
 import 'package:flutter_blog_app/models/blog.dart';
 
+/// BlogRepository ist für die Verwaltung der Blog-Daten zuständig.
+/// Es verwendet ein Singleton-Muster, um eine einzige Instanz über die App hinweg zu gewährleisten.
 class BlogRepository {
-  // Static instance + private Constructor for simple Singleton-approach
+  // Statische Instanz für das Singleton-Muster.
   static BlogRepository instance = BlogRepository._privateConstructor();
   BlogRepository._privateConstructor();
 
+  // Privates Array, das alle Blog-Objekte speichert.
   final _blogs = <Blog>[];
+  int _nextId = 1; // Nächste ID für neue Blog-Beiträge.
+  bool _isInitialized = false; // Flag zur Überprüfung der Initialisierung.
 
-  int _nextId = 1;
-
-  bool _isInitialized = false;
-
-  void _initializeBlogs() async {
+  /// Initialisiert das Repository mit einigen Beispieldaten.
+  void _initializeBlogs() {
     addBlogPost(Blog(
       title: "Flutter ist toll!",
       content:
@@ -38,36 +39,35 @@ class BlogRepository {
     _isInitialized = true;
   }
 
-  /// Returns all blog posts ordered by publishedAt descending.
-  /// Simulates network delay.
+  /// Gibt alle Blog-Beiträge sortiert nach Veröffentlichungsdatum zurück.
+  /// Simuliert eine Netzwerkverzögerung.
   Future<List<Blog>> getBlogPosts() async {
     if (!_isInitialized) {
       _initializeBlogs();
     }
 
     await Future.delayed(const Duration(milliseconds: 500));
-
     return _blogs..sort((a, b) => b.publishedAt.compareTo(a.publishedAt));
   }
 
-  /// Creates a new blog post and sets a new id.
+  /// Erstellt einen neuen Blog-Beitrag und weist ihm eine neue ID zu.
   Future<void> addBlogPost(Blog blog) async {
     blog.id = _nextId++;
     _blogs.add(blog);
   }
 
-  /// Deletes a blog post.
+  /// Löscht einen Blog-Beitrag.
   Future<void> deleteBlogPost(Blog blog) async {
     _blogs.remove(blog);
   }
 
-  /// Changes the like info of a blog post.
+  /// Ändert den Like-Status eines Blog-Beitrags.
   Future<void> toggleLikeInfo(int blogId) async {
     final blog = _blogs.firstWhere((blog) => blog.id == blogId);
     blog.isLikedByMe = !blog.isLikedByMe;
   }
 
-  /// Updates a blog post with the given id.
+  /// Aktualisiert einen Blog-Beitrag mit der gegebenen ID.
   Future<void> updateBlogPost(
       {required int blogId, String? title, String? content}) async {
     await Future.delayed(const Duration(milliseconds: 500));
