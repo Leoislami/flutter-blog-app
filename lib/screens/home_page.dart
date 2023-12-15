@@ -1,64 +1,59 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_blog_app/models/blog.dart';
+import 'package:flutter_blog_app/providers/blog_provider.dart';
 import 'package:flutter_blog_app/screens/blog/blog_detail_page.dart';
 import 'package:flutter_blog_app/services/blog_repository.dart';
+import 'package:provider/provider.dart';
 
-// Definiert die Startseite der App mit einer Liste von Blog-Beiträgen.
-class HomePage extends StatefulWidget {
+class HomePage extends StatelessWidget {
   const HomePage({super.key});
 
   @override
-  State<HomePage> createState() => _HomePageState();
-}
-
-class _HomePageState extends State<HomePage> {
-  final BlogRepository _blogRepository =
-      BlogRepository(); // Instanz des BlogRepository.
-  List<Blog>? blogs; // Liste, die Blog-Beiträge enthält.
-
-  @override
-  void initState() {
-    super.initState();
-    // Blog-Einträge asynchron abrufen und den State aktualisieren, wenn sie geladen sind.
-    _blogRepository.getBlogPosts().then((blogPosts) {
-      if (!mounted) return; // Überprüft, ob das Widget noch im Widget-Baum ist.
-      setState(() {
-        blogs = blogPosts; // Aktualisiert die Liste der Blog-Beiträge.
-      });
-    });
-  }
-
-  @override
   Widget build(BuildContext context) {
-    // Anzeige eines Ladeindikators, wenn die Blogs noch nicht geladen wurden.
-    if (blogs == null) {
-      return const Center(child: CircularProgressIndicator());
-    }
-
-    // Anzeige einer Nachricht, wenn keine Blogs vorhanden sind.
-    if (blogs!.isEmpty) {
-      return const Center(child: Text('No blogs yet.'));
-    }
-
-    // Verwendet ein Scaffold-Widget als Basislayout.
     return Scaffold(
-      appBar: AppBar(title: const Text("Blog")), // AppBar mit dem Titel "Blog".
-      body: ListView.builder(
-        itemCount: blogs!.length, // Anzahl der Blog-Beiträge.
-        itemBuilder: (context, index) {
-          var blog = blogs![index];
-          // Erstellt eine Karte für jeden Blog-Beitrag.
-          return Padding(
-            padding: const EdgeInsets.all(4.0),
-            child: BlogWidget(blog: blog), // BlogWidget definiert unten.
-          );
+      appBar: AppBar(
+        title: const Text("Blog"),
+      ),
+      body: RefreshIndicator(
+        onRefresh: () async {
+          context.read<BlogProvider>().readBlogsWithLoadingState();
         },
+        child: const BlogListWidget(),
       ),
     );
   }
 }
 
-// Definiert die Darstellung eines einzelnen Blog-Beitrags.
+class BlogListWidget extends StatelessWidget {
+  const BlogListWidget({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    BlogProvider blogProvider = context.watch<BlogProvider>();
+
+    return Stack(children: [
+      blogProvider.blogs.isEmpty && !blogProvider.isLoading
+          ? const Center(
+              child: Text('No blogs yet.'),
+            )
+          : ListView.builder(
+              itemCount: blogProvider.blogs.length,
+              itemBuilder: (context, index) {
+                var blog = blogProvider.blogs[index];
+                return Padding(
+                  padding: const EdgeInsets.all(4.0),
+                  child: BlogWidget(blog: blog),
+                );
+              },
+            ),
+      if (blogProvider.isLoading)
+        const Center(
+          child: CircularProgressIndicator(),
+        )
+    ]);
+  }
+}
+
 class BlogWidget extends StatelessWidget {
   const BlogWidget({super.key, required this.blog});
 
@@ -66,12 +61,10 @@ class BlogWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Verwendet MouseRegion, um den Mauszeiger zu ändern, wenn man über das Widget fährt.
     return MouseRegion(
       cursor: SystemMouseCursors.click,
       child: GestureDetector(
         onTap: () {
-          // Navigiert zur Detailseite des Blogs, wenn auf das Widget getippt wird.
           Navigator.of(context).push(MaterialPageRoute(
             builder: (context) => BlogDetailPage(blog: blog),
           ));
@@ -83,29 +76,32 @@ class BlogWidget extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  blog.title, // Der Titel des Blogs.
+                  blog.title,
                   style: const TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 18,
                   ),
                 ),
-                const SizedBox(height: 8.0), // Abstandshalter.
-                Text(blog.content), // Der Inhalt des Blogs.
-                const SizedBox(height: 8.0), // Weitere Abstandshalter.
+                const SizedBox(height: 8.0),
+                Text(blog.content),
+                const SizedBox(height: 8.0),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                      blog.publishedDateString, // Das Veröffentlichungsdatum des Blogs.
-                      style: Theme.of(context).textTheme.bodyMedium!.copyWith(
-                            fontStyle: FontStyle.italic,
-                          ),
-                    ),
+                    Text(blog.publishedDateString,
+                        style: Theme.of(context).textTheme.bodyMedium!.copyWith(
+                              fontStyle: FontStyle.italic,
+                            )),
                     IconButton(
-                      icon: const Icon(
-                          Icons.favorite_border), // Icon für Like-Button.
-                      onPressed: () {
-                        // TODO: Logik zum Liken des Blogs einfügen.
+                      icon: Icon(
+                        blog.isLikedByMe
+                            ? Icons.favorite
+                            : Icons.favorite_border,
+                      ),
+                      onPressed: () async {
+                        var blogProvider = context.read<BlogProvider>();
+                        await BlogRepository.instance.toggleLikeInfo(blog.id);
+                        blogProvider.readBlogsWithLoadingState();
                       },
                     ),
                   ],

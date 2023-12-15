@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_blog_app/models/blog.dart';
+import 'package:flutter_blog_app/providers/blog_provider.dart';
+import 'package:flutter_blog_app/services/blog_repository.dart';
+import 'package:provider/provider.dart';
 
-// Definiert den Zustand für die Seite, auf der ein neuer Blog erstellt werden kann.
 class BlogNewPage extends StatefulWidget {
   const BlogNewPage({super.key});
 
@@ -8,100 +11,114 @@ class BlogNewPage extends StatefulWidget {
   State<BlogNewPage> createState() => _BlogNewPageState();
 }
 
+enum _PageStates { loading, editing, done }
+
 class _BlogNewPageState extends State<BlogNewPage> {
-  // Controller für die Texteingabe des Blogtitels.
-  final TextEditingController _titleController = TextEditingController();
-  // Controller für die Texteingabe des Bloginhalts.
-  final TextEditingController _contentController = TextEditingController();
+  final formKey = GlobalKey<FormState>();
+  var pageState = _PageStates.editing;
+  var title = "";
+  var content = "";
 
   @override
   Widget build(BuildContext context) {
-    // Scaffold stellt die Grundstruktur der Seite bereit.
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Create New Blog'), // Titel der AppBar.
+        title: const Text("New Blog"),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0), // Padding für den Inhalt.
-        child: Column(
-          children: [
-            // Eingabefeld für den Titel des neuen Blogs.
-            TextField(
-              controller: _titleController, // Verwendet den _titleController.
-              decoration: const InputDecoration(
-                labelText: 'Blog Title', // Label über dem Eingabefeld.
-                border: OutlineInputBorder(), // Umrandung des Eingabefelds.
+      body: Builder(builder: (context) {
+        switch (pageState) {
+          case _PageStates.loading:
+            return const Center(child: CircularProgressIndicator());
+          case _PageStates.done:
+            return Center(child: Text("Blog '$title' created!"));
+          case _PageStates.editing:
+            return Form(
+              key: formKey,
+              // autovalidateMode: AutovalidateMode.onUserInteraction,
+              child: Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: ListView(
+                  children: [
+                    const SizedBox(height: 20),
+                    TextFormField(
+                      decoration: const InputDecoration(
+                        labelText: "Title",
+                        border: OutlineInputBorder(),
+                      ),
+                      validator: (value) {
+                        if (value == null || value.length < 4) {
+                          return "Please enter title with 4 or more characters";
+                        }
+                        return null;
+                      },
+                      onSaved: (value) => title = value!,
+                    ),
+                    const SizedBox(height: 20),
+                    TextFormField(
+                      maxLines: 10,
+                      decoration: const InputDecoration(
+                        labelText: "Content",
+                        border: OutlineInputBorder(),
+                      ),
+                      validator: (value) {
+                        if (value == null || value.length < 10) {
+                          return "Please enter content with 10 or more characters";
+                        }
+                        return null;
+                      },
+                      onSaved: (value) => content = value!,
+                    ),
+                    const SizedBox(height: 20),
+                    ElevatedButton(
+                      onPressed: () async {
+                        // Hide keyboard
+                        FocusScope.of(context).unfocus();
+
+                        if (formKey.currentState!.validate()) {
+                          setState(() {
+                            pageState = _PageStates.loading;
+                          });
+                          formKey.currentState!.save();
+                          await _createBlog();
+                          setState(() {
+                            pageState = _PageStates.done;
+                          });
+                        }
+                      },
+                      child: const Text("Save"),
+                    ),
+                    const SizedBox(height: 8.0),
+                  ],
+                ),
               ),
-            ),
-            const SizedBox(height: 16), // Abstand zwischen den Eingabefeldern.
-            // Eingabefeld für den Inhalt des neuen Blogs.
-            TextField(
-              controller:
-                  _contentController, // Verwendet den _contentController.
-              decoration: const InputDecoration(
-                labelText: 'Blog Content', // Label über dem Eingabefeld.
-                border: OutlineInputBorder(), // Umrandung des Eingabefelds.
-              ),
-              maxLines: null, // Erlaubt mehrzeilige Eingabe.
-              keyboardType:
-                  TextInputType.multiline, // Tastatur für mehrzeiligen Text.
-            ),
-          ],
-        ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          // Hier würde die Logik zum Speichern des neuen Blogs stehen.
-          // Zum Beispiel könnten Sie den Blog zu einer Liste hinzufügen oder in einer Datenbank speichern.
-          // Derzeit nur ein Platzhalter, der den Titel und Inhalt in der Konsole ausgibt.
-          print('Saving new blog with title: ${_titleController.text}');
-          print('Content: ${_contentController.text}');
-        },
-        child: const Icon(Icons.save), // Icon des Buttons.
-      ),
+            );
+        }
+      }),
     );
+  }
+
+  Future<void> _createBlog() async {
+    var blogProvider = context.read<BlogProvider>();
+    await Future.delayed(const Duration(seconds: 1));
+    await BlogRepository.instance.addBlogPost(Blog(
+      title: title,
+      content: content,
+      publishedAt: DateTime.now(),
+    ));
+    blogProvider.readBlogs();
   }
 }
 
+class BlogForm extends StatefulWidget {
+  const BlogForm({super.key});
 
+  @override
+  State<BlogForm> createState() => _BlogFormState();
+}
 
-
-
-
-// import 'package:flutter/material.dart';
-
-// class BlogNewPage extends StatefulWidget {
-//   const BlogNewPage({super.key});
-
-//   @override
-//   State<BlogNewPage> createState() => _BlogNewPageState();
-// }
-
-// class _BlogNewPageState extends State<BlogNewPage> {
-//   @override
-//   Widget build(BuildContext context) {
-//     // Scaffold mit AppBar und einem leeren Platzhalter für den Inhalt.
-//     return Scaffold(
-//       appBar: AppBar(
-//         title: const Text('Create New Blog'), // Titel für die neue Blog-Seite.
-//       ),
-//       // Hier könnte der Inhalt für das Erstellen eines neuen Blogs eingefügt werden.
-//       body: const Padding(
-//         padding: EdgeInsets.all(16.0),
-//         child: Column(
-//           children: [
-//             // Widgets für die Eingabe des neuen Blogs (z.B. Textfelder).
-//             // ...
-//           ],
-//         ),
-//       ),
-//       // Floating Action Button zum Speichern des neuen Blogs.
-//       floatingActionButton: FloatingActionButton(
-//         onPressed: () {
-//           // Logik zum Speichern des neuen Blogs einfügen.
-//         },
-//         child: const Icon(Icons.save),
-//       ),
-//     );
-//   }
-// }
+class _BlogFormState extends State<BlogForm> {
+  @override
+  Widget build(BuildContext context) {
+    return Container();
+  }
+}
