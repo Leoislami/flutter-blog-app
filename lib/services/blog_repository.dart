@@ -1,19 +1,16 @@
 import 'dart:async';
-
+import 'package:collection/collection.dart';
 import 'package:flutter_blog_app/models/blog.dart';
 
 class BlogRepository {
-  // Static instance + private Constructor for simple Singleton-approach
   static BlogRepository instance = BlogRepository._privateConstructor();
   BlogRepository._privateConstructor();
 
   final _blogs = <Blog>[];
-
   int _nextId = 1;
-
   bool _isInitialized = false;
 
-  void _initializeBlogs() async {
+  void _initializeBlogs() {
     addBlogPost(Blog(
       title: "Flutter ist toll!",
       content:
@@ -38,45 +35,41 @@ class BlogRepository {
     _isInitialized = true;
   }
 
-  /// Returns all blog posts ordered by publishedAt descending.
-  /// Simulates network delay.
   Future<List<Blog>> getBlogPosts() async {
     if (!_isInitialized) {
       _initializeBlogs();
     }
 
     await Future.delayed(const Duration(milliseconds: 500));
-
     return _blogs..sort((a, b) => b.publishedAt.compareTo(a.publishedAt));
   }
 
-  /// Creates a new blog post and sets a new id.
   Future<void> addBlogPost(Blog blog) async {
     blog.id = _nextId++;
     _blogs.add(blog);
   }
 
-  /// Deletes a blog post.
   Future<void> deleteBlogPost(Blog blog) async {
-    _blogs.remove(blog);
+    _blogs.removeWhere((b) => b.id == blog.id);
   }
 
-  /// Changes the like info of a blog post.
   Future<void> toggleLikeInfo(int blogId) async {
-    final blog = _blogs.firstWhere((blog) => blog.id == blogId);
-    blog.isLikedByMe = !blog.isLikedByMe;
+    // Verwenden Sie firstWhereOrNull aus dem collection-Paket
+    final blog = _blogs.firstWhereOrNull((b) => b.id == blogId);
+
+    if (blog != null) {
+      blog.isLikedByMe = !blog.isLikedByMe;
+    }
   }
 
-  /// Updates a blog post with the given id.
   Future<void> updateBlogPost(
       {required int blogId, String? title, String? content}) async {
-    await Future.delayed(const Duration(milliseconds: 500));
-    final blog = _blogs.firstWhere((blog) => blog.id == blogId);
-    if (title != null) {
-      blog.title = title;
-    }
-    if (content != null) {
-      blog.content = content;
+    final blogIndex = _blogs.indexWhere((b) => b.id == blogId);
+    if (blogIndex != -1) {
+      final blog = _blogs[blogIndex];
+      if (title != null) blog.title = title;
+      if (content != null) blog.content = content;
+      blog.publishedAt = DateTime.now(); // Optional: Update the published date
     }
   }
 }
