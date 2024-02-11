@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_blog_app/models/blog.dart';
 import 'package:flutter_blog_app/providers/blog_provider.dart';
-import 'package:flutter_blog_app/services/blog_repository.dart';
+import 'package:flutter_blog_app/services/blog_service.dart';
+import 'package:flutter_blog_app/services/blog_api.dart';
 import 'package:provider/provider.dart';
 
 // BlogDetailPage dient zum Anzeigen und Bearbeiten der Details eines Blog-Beitrags.
@@ -83,9 +84,8 @@ class _BlogDetailPageState extends State<BlogDetailPage> {
       pageState = _PageStates.loading;
     });
     var blogProvider = context.read<BlogProvider>();
-    await BlogRepository.instance
-        .updateBlogPost(blogId: widget.blog.id, title: newTitle);
-    blogProvider.readBlogs();
+    await blogProvider.updateBlog(
+        widget.blog.id, newTitle, widget.blog.content);
     if (mounted) {
       setState(() {
         title = newTitle;
@@ -100,9 +100,8 @@ class _BlogDetailPageState extends State<BlogDetailPage> {
       pageState = _PageStates.loading;
     });
     var blogProvider = context.read<BlogProvider>();
-    await BlogRepository.instance
-        .updateBlogPost(blogId: widget.blog.id, content: newContent);
-    blogProvider.readBlogs();
+    await blogProvider.updateBlog(
+        widget.blog.id, widget.blog.title, newContent);
     if (mounted) {
       setState(() {
         content = newContent;

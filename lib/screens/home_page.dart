@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_blog_app/models/blog.dart';
 import 'package:flutter_blog_app/providers/blog_provider.dart';
 import 'package:flutter_blog_app/screens/blog/blog_detail_page.dart';
-import 'package:flutter_blog_app/services/blog_repository.dart';
+import 'package:flutter_blog_app/services/blog_service.dart';
+import 'package:flutter_blog_app/services/blog_api.dart';
 import 'package:provider/provider.dart';
 
 /// HomePage ist die Hauptseite der Blog-App, die eine Liste von Blogs anzeigt.
@@ -110,13 +111,13 @@ class BlogWidget extends StatelessWidget {
                     // Like-Button, um den Like-Status zu ändern.
                     IconButton(
                       icon: Icon(
-                        blog.isLikedByMe
+                        blog.isLikedByUser()
                             ? Icons.favorite
                             : Icons.favorite_border,
                       ),
                       onPressed: () async {
                         var blogProvider = context.read<BlogProvider>();
-                        await BlogRepository.instance.toggleLikeInfo(blog.id);
+                        await blogProvider.toggleBlogLike(blog.id);
                         blogProvider.readBlogsWithLoadingState();
                       },
                     ),

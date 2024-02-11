@@ -1,7 +1,8 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_blog_app/models/blog.dart';
-import 'package:flutter_blog_app/services/blog_repository.dart';
+import 'package:flutter_blog_app/services/blog_service.dart';
+import 'package:flutter_blog_app/services/blog_api.dart';
 
 /// BlogProvider ist verantwortlich für die Verwaltung des Zustands der Blog-Liste.
 /// Es verwendet ChangeNotifier, um Änderungen an den Konsumenten zu melden.
@@ -40,9 +41,45 @@ class BlogProvider extends ChangeNotifier {
   /// Liest die Blogs vom BlogRepository.
   /// Die Option withNotifying steuert, ob die Listener nach dem Lesen benachrichtigt werden sollen.
   Future<void> readBlogs({bool withNotifying = true}) async {
-    _blogs = await BlogRepository.instance.getBlogPosts();
+    _blogs = await BlogService.instance.getBlogs();
     if (withNotifying) {
       notifyListeners();
     }
+  }
+
+  Future<void> addBlog(String title, String content,
+      {String? headerImageUrl}) async {
+    isLoading = true;
+    notifyListeners();
+    await BlogService.instance.addBlog(
+        title: title, content: content, headerImageUrl: headerImageUrl);
+    await readBlogsWithLoadingState();
+  }
+
+  Future<void> updateBlog(String blogId, String title, String content) async {
+    isLoading = true;
+    notifyListeners();
+
+    await BlogService.instance.patchBlog(
+      blogId: blogId,
+      title: title,
+      content: content,
+    );
+
+    await readBlogsWithLoadingState();
+  }
+
+  Future<void> deleteBlog(String blogId) async {
+    isLoading = true;
+    notifyListeners();
+
+    await BlogService.instance.deleteBlog(blogId: blogId);
+
+    await readBlogsWithLoadingState();
+  }
+
+  Future<void> toggleBlogLike(String blogId, String userId) async {
+    await BlogApi.instance.toggleBlogLike(blogId, userId);
+    await readBlogsWithLoadingState(); // Liest die Blogs erneut, um die UI zu aktualisieren
   }
 }

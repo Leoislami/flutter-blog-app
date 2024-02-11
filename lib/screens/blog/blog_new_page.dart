@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_blog_app/models/blog.dart';
 import 'package:flutter_blog_app/providers/blog_provider.dart';
-import 'package:flutter_blog_app/services/blog_repository.dart';
+import 'package:flutter_blog_app/services/blog_service.dart';
+import 'package:flutter_blog_app/services/blog_api.dart';
 import 'package:provider/provider.dart';
 
 /// BlogNewPage ermöglicht das Erstellen neuer Blog-Beiträge.
@@ -104,29 +105,32 @@ class _BlogNewPageState extends State<BlogNewPage> {
 
   /// Funktion zum Erstellen eines neuen Blog-Beitrags.
   Future<void> _createBlog() async {
+    setState(() {
+      pageState = _PageStates.loading;
+    });
+
     var blogProvider = context.read<BlogProvider>();
-    await Future.delayed(
-        const Duration(seconds: 1)); // Simuliert eine Netzwerkverzögerung.
-    await BlogRepository.instance.addBlogPost(Blog(
-      title: title,
-      content: content,
-      publishedAt: DateTime.now(),
-    ));
-    blogProvider.readBlogs(); // Aktualisiert die Blog-Liste im BlogProvider.
+    await blogProvider.addBlog(title, content);
+
+    if (mounted) {
+      setState(() {
+        pageState = _PageStates.done;
+      });
+    }
   }
-}
 
-// BlogForm ist ein nicht implementiertes Widget, das in zukünftigen Versionen verwendet werden könnte.
-class BlogForm extends StatefulWidget {
-  const BlogForm({super.key});
+// // BlogForm ist ein nicht implementiertes Widget, das in zukünftigen Versionen verwendet werden könnte.
+// class BlogForm extends StatefulWidget {
+//   const BlogForm({super.key});
 
-  @override
-  State<BlogForm> createState() => _BlogFormState();
-}
+//   @override
+//   State<BlogForm> createState() => _BlogFormState();
+// }
 
-class _BlogFormState extends State<BlogForm> {
-  @override
-  Widget build(BuildContext context) {
-    return Container();
-  }
+// class _BlogFormState extends State<BlogForm> {
+//   @override
+//   Widget build(BuildContext context) {
+//     return Container();
+//   }
+// }
 }
