@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_blog_app/screens/blog/blog_new_page.dart';
 import 'package:flutter_blog_app/screens/home_page.dart';
+import 'package:flutter_blog_app/screens/login_page.dart';
 
 class MainMenuItem {
   static final List<MainMenuItem> items = _getMenuItems();
@@ -16,6 +17,7 @@ class MainMenuItem {
 
 List<MainMenuItem> _getMenuItems() => [
       MainMenuItem(icon: Icons.home, text: "Home", page: const HomePage()),
+      MainMenuItem(icon: Icons.home, text: "Login", page: LoginPage()),
       MainMenuItem(
           icon: Icons.add, text: "New Blog", page: const BlogNewPage()),
     ];
