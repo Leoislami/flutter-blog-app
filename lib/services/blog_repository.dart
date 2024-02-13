@@ -14,7 +14,7 @@ class BlogRepository {
     addBlogPost(Blog(
       title: "Flutter ist toll!",
       content:
-          "Mit Flutter hebst du deine App-Entwicklung auf ein neues Level. Probier es aus!",
+          "Mit Flutter hebst d  u deine App-Entwicklung auf ein neues Level. Probier es aus!",
       publishedAt: DateTime.now(),
     ));
 
