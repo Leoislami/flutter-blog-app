@@ -1,75 +1,50 @@
 import 'dart:async';
-import 'package:collection/collection.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_blog_app/models/blog.dart';
 
 class BlogRepository {
   static BlogRepository instance = BlogRepository._privateConstructor();
   BlogRepository._privateConstructor();
 
-  final _blogs = <Blog>[];
-  int _nextId = 1;
-  bool _isInitialized = false;
-
-  void _initializeBlogs() {
-    addBlogPost(Blog(
-      title: "Flutter ist toll!",
-      content:
-          "Mit Flutter hebst d  u deine App-Entwicklung auf ein neues Level. Probier es aus!",
-      publishedAt: DateTime.now(),
-    ));
-
-    addBlogPost(Blog(
-      title: "Der Kurs ist dabei abzuheben",
-      content:
-          "Fasten your seatbelts, we are ready for takeoff! 🚀 Jetzt geht's ans Eingemachte. Bleib dabei!",
-      publishedAt: DateTime.now().subtract(const Duration(days: 1)),
-    ));
-
-    addBlogPost(Blog(
-      title: "Klasse erzeugt eine super App",
-      content:
-          "Während dem aktiven Plenum hat die Klasse alles rausgeholt und eine tolle App gebaut. Alle waren begeistert dabei und haben viel gelernt.",
-      publishedAt: DateTime.now().subtract(const Duration(days: 2)),
-    ));
-
-    _isInitialized = true;
-  }
+  final CollectionReference<Blog> _blogCollection =
+  FirebaseFirestore.instance.collection('blogs').withConverter<Blog>(
+    fromFirestore: (snapshots, _) => Blog.fromJson(snapshots.data()!, snapshots.id),
+    toFirestore: (blog, _) => blog.toJson(),
+  );
 
   Future<List<Blog>> getBlogPosts() async {
-    if (!_isInitialized) {
-      _initializeBlogs();
-    }
-
-    await Future.delayed(const Duration(milliseconds: 500));
-    return _blogs..sort((a, b) => b.publishedAt.compareTo(a.publishedAt));
+    QuerySnapshot<Blog> snapshot = await _blogCollection.get();
+    return snapshot.docs.map((doc) => doc.data()).toList()
+      ..sort((a, b) => b.publishedAt.compareTo(a.publishedAt));
   }
 
   Future<void> addBlogPost(Blog blog) async {
-    blog.id = _nextId++;
-    _blogs.add(blog);
+    await _blogCollection.add(blog);
   }
 
-  Future<void> deleteBlogPost(Blog blog) async {
-    _blogs.removeWhere((b) => b.id == blog.id);
+  Future<void> deleteBlogPost(String blogId) async {
+    await _blogCollection.doc(blogId).delete();
   }
 
-  Future<void> toggleLikeInfo(int blogId) async {
-    // Verwenden Sie firstWhereOrNull aus dem collection-Paket
-    final blog = _blogs.firstWhereOrNull((b) => b.id == blogId);
+  Future<void> toggleLikeInfo(String userId, String blogId) async {
+    DocumentSnapshot<Blog> doc = await _blogCollection.doc(blogId).get();
+    if (doc.exists) {
+      Blog blog = doc.data()!;
+      blog.likedBy = List.from(blog.likedBy);
 
-    if (blog != null) {
-      blog.isLikedByMe = !blog.isLikedByMe;
+      if (blog.likedBy.contains(userId)) {
+        blog.likedBy.remove(userId);
+      } else {
+        blog.likedBy.add(userId);
+      }
+      await _blogCollection.doc(blogId).set(blog);
     }
   }
 
   Future<void> updateBlogPost(
-      {required int blogId, String? title, String? content}) async {
-    final blogIndex = _blogs.indexWhere((b) => b.id == blogId);
-    if (blogIndex != -1) {
-      final blog = _blogs[blogIndex];
-      if (title != null) blog.title = title;
-      if (content != null) blog.content = content;
-      blog.publishedAt = DateTime.now(); // Optional: Update the published date
-    }
+      {required String blogId, String? title, String? content}) async {
+    final blog = _blogCollection.doc(blogId);
+    if (title != null) await blog.update({'title': title});
+    if (content != null) await blog.update({'content': content});
   }
 }

@@ -87,12 +87,6 @@ class _BlogEditPageState extends State<BlogEditPage> {
     if (!formKey.currentState!.validate()) return;
 
     final blogProvider = Provider.of<BlogProvider>(context, listen: false);
-    final updatedBlog = Blog(
-      id: widget.blog.id,
-      title: _titleController.text,
-      content: _contentController.text,
-      publishedAt: DateTime.now(),
-    );
 
     await BlogRepository.instance.updateBlogPost(
       blogId: widget.blog.id,

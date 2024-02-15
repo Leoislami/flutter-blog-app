@@ -1,8 +1,11 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_blog_app/models/blog.dart';
 import 'package:flutter_blog_app/providers/blog_provider.dart';
 import 'package:flutter_blog_app/services/blog_repository.dart';
 import 'package:provider/provider.dart';
+
+import '../login_page.dart';
 
 class BlogNewPage extends StatefulWidget {
   const BlogNewPage({super.key});
@@ -100,12 +103,19 @@ class _BlogNewPageState extends State<BlogNewPage> {
   Future<void> _createBlog() async {
     var blogProvider = context.read<BlogProvider>();
     await Future.delayed(const Duration(seconds: 1));
-    await BlogRepository.instance.addBlogPost(Blog(
-      title: title,
-      content: content,
-      publishedAt: DateTime.now(),
-    ));
-    blogProvider.readBlogs();
+
+    User? user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      await BlogRepository.instance.addBlogPost(Blog(
+        authorId: user.uid,
+        title: title,
+        content: content,
+        publishedAt: DateTime.now(),
+      ));
+      blogProvider.readBlogs();
+    } else {
+      Navigator.of(context).push(MaterialPageRoute(builder: (context) => LoginPage()));
+    }
   }
 }
 
