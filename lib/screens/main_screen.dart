@@ -1,10 +1,13 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_blog_app/screens/blog/blog_new_page.dart';
 import 'package:flutter_blog_app/screens/home_page.dart';
+import 'package:flutter_blog_app/screens/login_page.dart';
+import 'package:provider/provider.dart';
 
-/// Klasse für Menüelemente, die in der Hauptnavigation verwendet werden.
+import '../providers/auth_provider.dart';
+
 class MainMenuItem {
-  // Liste aller Menüelemente.
   static final List<MainMenuItem> items = _getMenuItems();
 
   final IconData icon;
@@ -12,19 +15,16 @@ class MainMenuItem {
   final Widget page;
   final GlobalKey<NavigatorState> navigatorKey;
 
-  // Konstruktor für MainMenuItem.
   MainMenuItem({required this.icon, required this.text, required this.page})
       : navigatorKey = GlobalKey<NavigatorState>();
 }
 
-// Erstellt und gibt die Liste der Menüelemente zurück.
 List<MainMenuItem> _getMenuItems() => [
       MainMenuItem(icon: Icons.home, text: "Home", page: const HomePage()),
       MainMenuItem(
           icon: Icons.add, text: "New Blog", page: const BlogNewPage()),
     ];
 
-/// MainScreen ist der Hauptbildschirm der App, der die Navigation verwaltet.
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
 
@@ -33,28 +33,64 @@ class MainScreen extends StatefulWidget {
 }
 
 class _MainScreenState extends State<MainScreen> {
-  int selectedIndex = 0; // Index des aktuell ausgewählten Menüelements.
+  int selectedIndex = 0;
 
   @override
   Widget build(BuildContext context) {
     final selectedMenuItem = MainMenuItem.items[selectedIndex];
+    final authProvider = Provider.of<MyAuthProvider>(context);
 
     return Scaffold(
       appBar: AppBar(
-        title:
-            Text(selectedMenuItem.text), // Titel des ausgewählten Menüelements.
+        title: Row(
+          children: [
+            Text(selectedMenuItem.text),
+            const Spacer(),
+            if (authProvider.user != null && authProvider.user?.photoURL != null)
+              PopupMenuButton(
+                offset: Offset(0, 50), // Adjust the vertical offset as needed
+                icon: CircleAvatar(
+                  radius: 20,
+                  backgroundImage: NetworkImage(authProvider.user!.photoURL!),
+                ),
+                itemBuilder: (BuildContext context) => <PopupMenuEntry>[
+                  const PopupMenuItem(
+                    value: 'logout',
+                    child: ListTile(
+                      leading: Icon(Icons.logout),
+                      title: Text('Logout'),
+                    ),
+                  ),
+                ],
+                onSelected: (value) {
+                  if (value == 'logout') {
+                    FirebaseAuth.instance.signOut();
+                  }
+                },
+              ),
+            if (authProvider.user == null || authProvider.user?.photoURL == null)
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => LoginPage()),
+                  );
+                },
+                child: const Icon(Icons.login),
+              ),
+          ],
+        ),
         leading: Builder(
           builder: (BuildContext context) {
             return IconButton(
               icon: const Icon(Icons.menu),
-              onPressed: () =>
-                  Scaffold.of(context).openDrawer(), // Öffnet den Drawer.
+              onPressed: () => Scaffold.of(context).openDrawer(),
             );
           },
         ),
       ),
       drawer: Drawer(
-        // Drawer-Menü mit allen Menüelementen.
+        // Hamburger-Menü mit Navigationselementen
         child: ListView(
           padding: EdgeInsets.zero,
           children: MainMenuItem.items.map((item) {
@@ -63,9 +99,8 @@ class _MainScreenState extends State<MainScreen> {
               title: Text(item.text),
               onTap: () {
                 setState(() {
-                  selectedIndex = MainMenuItem.items
-                      .indexOf(item); // Aktualisiert den ausgewählten Index.
-                  Navigator.of(context).pop(); // Schließt den Drawer.
+                  selectedIndex = MainMenuItem.items.indexOf(item);
+                  Navigator.of(context).pop(); // Schließt das Drawer-Menü
                 });
               },
             );
@@ -74,9 +109,8 @@ class _MainScreenState extends State<MainScreen> {
       ),
       body: Navigator(
         key: selectedMenuItem.navigatorKey,
-        onGenerateRoute: (settings) => MaterialPageRoute(
-            builder: (context) =>
-                selectedMenuItem.page), // Navigiert zur ausgewählten Seite.
+        onGenerateRoute: (settings) =>
+            MaterialPageRoute(builder: (context) => selectedMenuItem.page),
       ),
     );
   }

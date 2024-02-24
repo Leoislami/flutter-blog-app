@@ -1,10 +1,12 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_blog_app/models/blog.dart';
 import 'package:flutter_blog_app/providers/blog_provider.dart';
 import 'package:flutter_blog_app/services/blog_repository.dart';
 import 'package:provider/provider.dart';
 
-/// BlogNewPage ermöglicht das Erstellen neuer Blog-Beiträge.
+import '../login_page.dart';
+
 class BlogNewPage extends StatefulWidget {
   const BlogNewPage({super.key});
 
@@ -12,7 +14,6 @@ class BlogNewPage extends StatefulWidget {
   State<BlogNewPage> createState() => _BlogNewPageState();
 }
 
-/// Verschiedene Zustände, die die Seite während des Erstellungsprozesses haben kann.
 enum _PageStates { loading, editing, done }
 
 class _BlogNewPageState extends State<BlogNewPage> {
@@ -30,21 +31,18 @@ class _BlogNewPageState extends State<BlogNewPage> {
       body: Builder(builder: (context) {
         switch (pageState) {
           case _PageStates.loading:
-            // Anzeigen eines Ladeindikators während der Blog erstellt wird.
             return const Center(child: CircularProgressIndicator());
           case _PageStates.done:
-            // Anzeigen einer Bestätigungsnachricht nach erfolgreicher Erstellung.
             return Center(child: Text("Blog '$title' created!"));
           case _PageStates.editing:
-            // Formular zum Erstellen eines neuen Blogs.
             return Form(
               key: formKey,
+              // autovalidateMode: AutovalidateMode.onUserInteraction,
               child: Padding(
                 padding: const EdgeInsets.all(8.0),
                 child: ListView(
                   children: [
                     const SizedBox(height: 20),
-                    // Textfeld für den Titel des Blogs.
                     TextFormField(
                       decoration: const InputDecoration(
                         labelText: "Title",
@@ -59,7 +57,6 @@ class _BlogNewPageState extends State<BlogNewPage> {
                       onSaved: (value) => title = value!,
                     ),
                     const SizedBox(height: 20),
-                    // Textfeld für den Inhalt des Blogs.
                     TextFormField(
                       maxLines: 10,
                       decoration: const InputDecoration(
@@ -75,10 +72,11 @@ class _BlogNewPageState extends State<BlogNewPage> {
                       onSaved: (value) => content = value!,
                     ),
                     const SizedBox(height: 20),
-                    // Button zum Speichern des neuen Blogs.
                     ElevatedButton(
                       onPressed: () async {
+                        // Hide keyboard
                         FocusScope.of(context).unfocus();
+
                         if (formKey.currentState!.validate()) {
                           setState(() {
                             pageState = _PageStates.loading;
@@ -102,21 +100,25 @@ class _BlogNewPageState extends State<BlogNewPage> {
     );
   }
 
-  /// Funktion zum Erstellen eines neuen Blog-Beitrags.
   Future<void> _createBlog() async {
     var blogProvider = context.read<BlogProvider>();
-    await Future.delayed(
-        const Duration(seconds: 1)); // Simuliert eine Netzwerkverzögerung.
-    await BlogRepository.instance.addBlogPost(Blog(
-      title: title,
-      content: content,
-      publishedAt: DateTime.now(),
-    ));
-    blogProvider.readBlogs(); // Aktualisiert die Blog-Liste im BlogProvider.
+    await Future.delayed(const Duration(seconds: 1));
+
+    User? user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      await BlogRepository.instance.addBlogPost(Blog(
+        authorId: user.uid,
+        title: title,
+        content: content,
+        publishedAt: DateTime.now(),
+      ));
+      blogProvider.readBlogs();
+    } else {
+      Navigator.of(context).push(MaterialPageRoute(builder: (context) => LoginPage()));
+    }
   }
 }
 
-// BlogForm ist ein nicht implementiertes Widget, das in zukünftigen Versionen verwendet werden könnte.
 class BlogForm extends StatefulWidget {
   const BlogForm({super.key});
 

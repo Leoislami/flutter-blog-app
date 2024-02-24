@@ -1,11 +1,15 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_blog_app/models/blog.dart';
 import 'package:flutter_blog_app/providers/blog_provider.dart';
 import 'package:flutter_blog_app/screens/blog/blog_detail_page.dart';
-import 'package:flutter_blog_app/services/blog_repository.dart';
+import 'package:flutter_blog_app/screens/blog/blog_edit_page.dart';
 import 'package:provider/provider.dart';
 
-/// HomePage ist die Hauptseite der Blog-App, die eine Liste von Blogs anzeigt.
+import '../providers/auth_provider.dart';
+import '../services/blog_repository.dart';
+import 'login_page.dart';
+
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
 
@@ -16,17 +20,15 @@ class HomePage extends StatelessWidget {
         title: const Text("Blog"),
       ),
       body: RefreshIndicator(
-        // Ermöglicht das Herunterziehen zum Aktualisieren der Blog-Liste.
         onRefresh: () async {
           context.read<BlogProvider>().readBlogsWithLoadingState();
         },
-        child: const BlogListWidget(), // Anzeige der Blog-Liste
+        child: const BlogListWidget(),
       ),
     );
   }
 }
 
-/// BlogListWidget ist ein Widget, das die Blog-Liste anzeigt.
 class BlogListWidget extends StatelessWidget {
   const BlogListWidget({super.key});
 
@@ -36,23 +38,20 @@ class BlogListWidget extends StatelessWidget {
 
     return Stack(
       children: [
-        // Zeigt eine Nachricht an, wenn keine Blogs vorhanden sind.
         blogProvider.blogs.isEmpty && !blogProvider.isLoading
             ? const Center(
-                child: Text('No blogs yet.'),
+                child: Text('Es sind noch keine Blogs vorhanden.'),
               )
-            // ListView, das die Blogs anzeigt.
             : ListView.builder(
                 itemCount: blogProvider.blogs.length,
                 itemBuilder: (context, index) {
                   var blog = blogProvider.blogs[index];
                   return Padding(
                     padding: const EdgeInsets.all(4.0),
-                    child: BlogWidget(blog: blog), // Einzelnes Blog-Widget
+                    child: BlogWidget(blog: blog),
                   );
                 },
               ),
-        // Zeigt einen Ladeindikator an, während die Blogs geladen werden.
         if (blogProvider.isLoading)
           const Center(
             child: CircularProgressIndicator(),
@@ -62,18 +61,17 @@ class BlogListWidget extends StatelessWidget {
   }
 }
 
-/// BlogWidget ist ein Widget, das ein einzelnes Blog anzeigt.
 class BlogWidget extends StatelessWidget {
   const BlogWidget({super.key, required this.blog});
-
   final Blog blog;
 
   @override
   Widget build(BuildContext context) {
+    final authProvider = Provider.of<MyAuthProvider>(context);
+
     return MouseRegion(
       cursor: SystemMouseCursors.click,
       child: GestureDetector(
-        // Navigiert zur Detailseite des Blogs beim Klicken.
         onTap: () {
           Navigator.of(context).push(MaterialPageRoute(
             builder: (context) => BlogDetailPage(blog: blog),
@@ -85,7 +83,6 @@ class BlogWidget extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Zeigt den Titel des Blogs.
                 Text(
                   blog.title,
                   style: const TextStyle(
@@ -94,10 +91,8 @@ class BlogWidget extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 8.0),
-                // Zeigt den Inhalt des Blogs.
                 Text(blog.content),
                 const SizedBox(height: 8.0),
-                // Zeigt das Veröffentlichungsdatum und Like-Button an.
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -107,18 +102,31 @@ class BlogWidget extends StatelessWidget {
                             fontStyle: FontStyle.italic,
                           ),
                     ),
-                    // Like-Button, um den Like-Status zu ändern.
-                    IconButton(
-                      icon: Icon(
-                        blog.isLikedByMe
-                            ? Icons.favorite
-                            : Icons.favorite_border,
-                      ),
-                      onPressed: () async {
-                        var blogProvider = context.read<BlogProvider>();
-                        await BlogRepository.instance.toggleLikeInfo(blog.id);
-                        blogProvider.readBlogsWithLoadingState();
-                      },
+                    Row(
+                      children: [
+                        IconButton(
+                          icon: _isLikedByMe(blog) ? const Icon(Icons.favorite, color: Colors.red) : const Icon(Icons.favorite_border),
+                          onPressed: () {
+                            _toggleLike(context, blog);
+                          },
+                        ),
+                        if (blog.authorId == authProvider.user?.uid)
+                        IconButton(
+                          icon: const Icon(Icons.edit),
+                          onPressed: () {
+                            Navigator.of(context).push(MaterialPageRoute(
+                              builder: (context) => BlogEditPage(blog: blog),
+                            ));
+                          },
+                        ),
+                        if (blog.authorId == authProvider.user?.uid)
+                        IconButton(
+                          icon: const Icon(Icons.delete),
+                          onPressed: () {
+                            _confirmDelete(context, blog.id);
+                          },
+                        ),
+                      ],
                     ),
                   ],
                 ),
@@ -127,6 +135,67 @@ class BlogWidget extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+
+  Future<void> _toggleLike(BuildContext context, Blog blog) async {
+    User? user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      String userId = user.uid;
+      await BlogRepository.instance.toggleLikeInfo(userId, blog.id);
+
+      final blogProvider = Provider.of<BlogProvider>(context, listen: false);
+      blogProvider.readBlogs();
+    } else {
+      Navigator.of(context).push(MaterialPageRoute(builder: (context) => LoginPage()));
+    }
+  }
+
+  bool _isLikedByMe(Blog blog) {
+    User? user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      String userId = user.uid;
+      return blog.likedBy.contains(userId);
+    } else {
+      return false;
+    }
+  }
+
+  Future<void> _confirmDelete(BuildContext context, String blogId) async {
+    return showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Löschen bestätigen'),
+          content: const SingleChildScrollView(
+            child: ListBody(
+              children: <Widget>[
+                Text('Bist du dir sicher das du diesen Blog löschen willst?'),
+              ],
+            ),
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('Abbrechen'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+            TextButton(
+              child: const Text('Löschen'),
+              onPressed: () async {
+                await BlogRepository.instance.deleteBlogPost(blogId);
+
+                final blogProvider = Provider.of<BlogProvider>(context, listen: false);
+                blogProvider.readBlogs();
+
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
     );
   }
 }

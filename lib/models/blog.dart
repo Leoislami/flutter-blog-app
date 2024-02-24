@@ -1,38 +1,43 @@
-/// Klasse Blog definiert die Struktur eines Blog-Objekts.
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 class Blog {
-  // Eindeutige ID des Blogs.
-  int id;
-
-  // Titel des Blogs.
+  String id;
+  String authorId;
   String title;
-
-  // Inhalt des Blogs.
   String content;
-
-  // Datum der Veröffentlichung des Blogs.
   DateTime publishedAt;
+  List<String> likedBy;
 
-  // Flag, das anzeigt, ob der Blog vom Benutzer geliked wurde.
-  bool isLikedByMe;
-
-  /// Konstruktor für die Erstellung eines neuen Blog-Objekts.
-  ///
-  /// [id] ist die eindeutige ID des Blogs und wird standardmäßig auf 0 gesetzt.
-  /// [title] ist der Titel des Blogs und ist erforderlich.
-  /// [content] ist der Inhalt des Blogs und ist erforderlich.
-  /// [publishedAt] ist das Datum der Veröffentlichung des Blogs und ist erforderlich.
-  /// [isLikedByMe] ist ein optionaler Parameter, der angibt, ob der Blog vom Benutzer geliked wurde.
   Blog({
-    this.id = 0,
+    this.id = '',
+    required this.authorId,
     required this.title,
     required this.content,
     required this.publishedAt,
-    this.isLikedByMe = false,
+    this.likedBy = const [],
   });
 
-  /// Getter, um das Veröffentlichungsdatum als formatierten String zurückzugeben.
-  ///
-  /// Formatiert das Datum als 'Tag.Monat.Jahr'.
   String get publishedDateString =>
       "${publishedAt.day}.${publishedAt.month}.${publishedAt.year}";
+
+  Map<String, dynamic> toJson() {
+    return {
+      'authorId': authorId,
+      'title': title,
+      'content': content,
+      'publishedAt': publishedAt,
+      'likedBy': likedBy,
+    };
+  }
+
+  factory Blog.fromJson(Map<String, dynamic> map, String id) {
+    return Blog(
+      id: id,
+      authorId: map['authorId']! as String,
+      title: map['title']! as String,
+      content: map['content']! as String,
+      publishedAt: (map['publishedAt'] as Timestamp).toDate(),
+      likedBy: (map['likedBy']! as List).cast<String>(),
+    );
+  }
 }
