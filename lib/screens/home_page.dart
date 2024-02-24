@@ -6,6 +6,7 @@ import 'package:flutter_blog_app/screens/blog/blog_detail_page.dart';
 import 'package:flutter_blog_app/screens/blog/blog_edit_page.dart';
 import 'package:provider/provider.dart';
 
+import '../providers/auth_provider.dart';
 import '../services/blog_repository.dart';
 import 'login_page.dart';
 
@@ -62,11 +63,12 @@ class BlogListWidget extends StatelessWidget {
 
 class BlogWidget extends StatelessWidget {
   const BlogWidget({super.key, required this.blog});
-
   final Blog blog;
 
   @override
   Widget build(BuildContext context) {
+    final authProvider = Provider.of<MyAuthProvider>(context);
+
     return MouseRegion(
       cursor: SystemMouseCursors.click,
       child: GestureDetector(
@@ -108,7 +110,7 @@ class BlogWidget extends StatelessWidget {
                             _toggleLike(context, blog);
                           },
                         ),
-                        if (blog.authorId == FirebaseAuth.instance.currentUser?.uid)
+                        if (blog.authorId == authProvider.user?.uid)
                         IconButton(
                           icon: const Icon(Icons.edit),
                           onPressed: () {
@@ -117,7 +119,7 @@ class BlogWidget extends StatelessWidget {
                             ));
                           },
                         ),
-                        if (blog.authorId == FirebaseAuth.instance.currentUser?.uid)
+                        if (blog.authorId == authProvider.user?.uid)
                         IconButton(
                           icon: const Icon(Icons.delete),
                           onPressed: () {
