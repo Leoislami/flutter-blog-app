@@ -1,15 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter_blog_app/screens/home_page.dart';
+import 'package:flutter_blog_app/screens/main_screen.dart';
 
 class LoginPage extends StatelessWidget {
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
-  Future<void> _signIn() async {
+  void _signIn(BuildContext context) {
     try {
-      // Sign in with Firebase Auth
-      UserCredential userCredential = await _auth.signInWithProvider(GoogleAuthProvider());
-      print('Signed in user: ${userCredential.user}');
-      // Navigate to the next screen after successful login
+      _auth.signInWithProvider(GoogleAuthProvider()).then((userCredential) {
+            if (userCredential.user != null) {
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (context) => const HomePage()),
+                );
+            }
+          });
     } catch (e) {
       print('Error signing in: $e');
     }
@@ -23,7 +29,7 @@ class LoginPage extends StatelessWidget {
       ),
       body: Center(
         child: ElevatedButton(
-          onPressed: _signIn,
+          onPressed: () => _signIn(context),
           child: const Text('Anmelden mit Google'),
         ),
       ),

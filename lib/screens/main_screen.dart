@@ -1,7 +1,11 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_blog_app/screens/blog/blog_new_page.dart';
 import 'package:flutter_blog_app/screens/home_page.dart';
 import 'package:flutter_blog_app/screens/login_page.dart';
+import 'package:provider/provider.dart';
+
+import '../providers/auth_provider.dart';
 
 class MainMenuItem {
   static final List<MainMenuItem> items = _getMenuItems();
@@ -17,7 +21,6 @@ class MainMenuItem {
 
 List<MainMenuItem> _getMenuItems() => [
       MainMenuItem(icon: Icons.home, text: "Home", page: const HomePage()),
-      MainMenuItem(icon: Icons.login, text: "Login", page: LoginPage()),
       MainMenuItem(
           icon: Icons.add, text: "New Blog", page: const BlogNewPage()),
     ];
@@ -35,10 +38,48 @@ class _MainScreenState extends State<MainScreen> {
   @override
   Widget build(BuildContext context) {
     final selectedMenuItem = MainMenuItem.items[selectedIndex];
+    final authProvider = Provider.of<MyAuthProvider>(context);
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(selectedMenuItem.text),
+        title: Row(
+          children: [
+            Text(selectedMenuItem.text),
+            const Spacer(),
+            if (authProvider.user != null && authProvider.user?.photoURL != null)
+              PopupMenuButton(
+                offset: Offset(0, 50), // Adjust the vertical offset as needed
+                icon: CircleAvatar(
+                  radius: 20,
+                  backgroundImage: NetworkImage(authProvider.user!.photoURL!),
+                ),
+                itemBuilder: (BuildContext context) => <PopupMenuEntry>[
+                  const PopupMenuItem(
+                    value: 'logout',
+                    child: ListTile(
+                      leading: Icon(Icons.logout),
+                      title: Text('Logout'),
+                    ),
+                  ),
+                ],
+                onSelected: (value) {
+                  if (value == 'logout') {
+                    FirebaseAuth.instance.signOut();
+                  }
+                },
+              ),
+            if (authProvider.user == null || authProvider.user?.photoURL == null)
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => LoginPage()),
+                  );
+                },
+                child: const Icon(Icons.login),
+              ),
+          ],
+        ),
         leading: Builder(
           builder: (BuildContext context) {
             return IconButton(
