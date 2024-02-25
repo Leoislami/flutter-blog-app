@@ -178,10 +178,11 @@ Defines the app's metadata and manages the dependencies used by the project. It 
 
 **/lib/screens/home_page.dart:** 
 
+
 Displays a list of blog posts fetched from Firebase Firestore. This screen is the main interface of the app, where users can navigate to read, edit, or create new blog posts.
 
 **/lib/screens/blog/blog_new_page.dart:** 
-<img src="lib/assets/new_blog.jpg"  alt="New Blog Page" style="width: 200px; float: right;">
+<img src="lib/assets/new_blog.jpg"  alt="New Blog Page" style="width: 200px; float: left;">
 
 Manages the creation of new blog posts, allowing users to input title and content, which are then saved to Firebase Firestore.
 
@@ -211,7 +212,7 @@ These files contain the logic for managing authentication state and blog post da
 In developing the Flutter Blog App, several key technical decisions were made to ensure a smooth, efficient, and scalable application. Here are some of the highlights:
 
 **State Management:** The app utilizes the Provider package for state management. This choice was driven by Provider's simplicity and effectiveness in managing app state, especially in a Flutter environment where data needs to be shared across different screens and widgets. It allows for a clean separation of business logic from UI components, facilitating easier maintenance and testing.
-<img src="lib/assets/State_Managment mit_Provider.jpg"  alt="State_Managment mit_Provider" style="width: 300px; float: right;">
+<img src="lib/assets/State_Managment mit_Provider.jpg"  alt="State_Managment mit_Provider" style="width: 300px; float: left;">
 
 **Firebase Integration:** Firebase Firestore and Firebase Authentication were chosen as the backend services for their real-time data synchronization capabilities and secure authentication mechanisms. Firestore serves as a flexible, scalable database for storing and syncing blog posts, while Firebase Authentication provides a robust solution for managing user sessions with Google Sign-In.
 
