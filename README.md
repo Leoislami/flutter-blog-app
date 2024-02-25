@@ -72,7 +72,7 @@ For a detailed step-by-step guide on setting up Firebase in your Flutter app, in
 dependencies:
   flutter:
     sdk: flutter
-  firebase_core: latest_version
+  firebase_core: ^2.25.4
 ```
 2. <b>Initialize Firebase:</b> In your `main.dart`, import Firebase and initialize it within the main function using `Firebase.initializeApp().`
 
